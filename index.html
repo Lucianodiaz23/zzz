@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>osu! - Perfil Aleatorio</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-overlay"></div>
+    
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">
+                <span class="logo-icon">🔵</span>
+                <span class="logo-text">osu!</span>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="nav-link">Inicio</a>
+                <a href="https://osu.ppy.sh/home" class="nav-link" target="_blank">Sitio Oficial</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <header class="page-header">
+                <h1>Perfil Aleatorio</h1>
+                <p class="subtitle">Descubre jugadores de la comunidad osu!</p>
+            </header>
+
+            <div class="controls-section">
+                <div class="mode-selector">
+                    <label for="modeSelect">Modo de juego:</label>
+                    <select id="modeSelect">
+                        <option value="osu">osu! (Standard)</option>
+                        <option value="taiko">osu!taiko</option>
+                        <option value="fruits">osu!catch</option>
+                        <option value="mania">osu!mania</option>
+                    </select>
+                </div>
+                <button id="randomBtn" class="btn-primary">
+                    <span class="btn-icon">🎲</span>
+                    <span class="btn-text">Ver Perfil Aleatorio</span>
+                </button>
+            </div>
+
+            <div class="loading-container" id="loading">
+                <div class="spinner"></div>
+                <p class="loading-text">Cargando perfil...</p>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="profile-card" id="profileCard">
+                <div class="profile-header">
+                    <div class="avatar-wrapper">
+                        <img src="" alt="Avatar" class="avatar" id="avatar">
+                        <div class="avatar-glow"></div>
+                    </div>
+                    <div class="user-info">
+                        <h2 class="username" id="username"></h2>
+                        <div class="user-meta">
+                            <span class="user-id" id="userId"></span>
+                            <span class="country-flag" id="countryFlag"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-section">
+                    <div class="stat-card">
+                        <div class="stat-icon">🌍</div>
+                        <div class="stat-content">
+                            <span class="stat-label">Rango Global</span>
+                            <span class="stat-value" id="globalRank">-</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏳️</div>
+                        <div class="stat-content">
+                            <span class="stat-label">Rango País</span>
+                            <span class="stat-value" id="countryRank">-</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-content">
+                            <span class="stat-label">Precisión</span>
+                            <span class="stat-value" id="accuracy">-</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-content">
+                            <span class="stat-label">Nivel</span>
+                            <span class="stat-value" id="level">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <a href="#" target="_blank" class="btn-profile" id="profileLink">
+                        <span class="btn-icon">🔗</span>
+                        <span class="btn-text">Ver perfil completo</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>Datos proporcionados por la API oficial de osu!</p>
+            <p class="footer-note">Este sitio no está afiliado con osu! ppy Pty Ltd.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
