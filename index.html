@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>osu! Random Profile Finder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --osu-pink: #ff66aa;
+            --osu-blue: #66ccff;
+            --bg-dark: #111;
+            --bg-panel: #222;
+            --text-main: #eee;
+            --text-dim: #aaa;
+            --card-width: 100px;
+            --card-height: 100px;
+            --card-gap: 20px;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Exo 2', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at top, #222 0%, #111 100%);
+            overflow-x: hidden;
+        }
+
+        header {
+            width: 100%;
+            padding: 20px 0;
+            text-align: center;
+            background: rgba(0,0,0,0.5);
+            border-bottom: 2px solid var(--osu-pink);
+            box-shadow: 0 0 15px var(--osu-pink);
+        }
+
+        h1 { margin: 0; font-style: italic; letter-spacing: 2px; }
+        span.highlight { color: var(--osu-pink); }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+
+        /* --- Tarjeta Principal --- */
+        .profile-card {
+            background: var(--bg-panel);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none;
+            animation: slideIn 0.5s ease-out;
+            border: 1px solid #333;
+            position: relative;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-section {
+            position: relative;
+            height: 150px;
+            background: linear-gradient(45deg, var(--osu-pink), var(--osu-blue));
+            display: flex;
+            align-items: flex-end;
+            padding: 20px;
+        }
+
+        .avatar-container {
+            position: absolute;
+            bottom: -50px;
+            left: 30px;
+            width: 110px;
+            height: 110px;
+            border: 4px solid var(--bg-panel);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            z-index: 2;
+        }
+
+        .avatar-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-info {
+            margin-left: 160px;
+            margin-bottom: 10px;
+            z-index: 1;
+        }
+
+        .username {
+            font-size: 2rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .country {
+            font-size: 1rem;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            padding: 70px 30px 30px;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border-bottom: 3px solid var(--osu-blue);
+        }
+
+        .stat-label { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 1.3rem; font-weight: 700; color: var(--text-main); margin-top: 5px; }
+
+        /* --- Controles --- */
+        .controls {
+            margin-top: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        button {
+            background: var(--osu-pink);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 10px var(--osu-pink);
+            text-transform: uppercase;
+        }
+
+        button:hover { transform: scale(1.05); background: #ff85bc; box-shadow: 0 0 20px var(--osu-pink); }
+        button:disabled { background: #555; cursor: not-allowed; box-shadow: none; transform: none; }
+
+        .loader {
+            border: 4px solid #333;
+            border-top: 4px solid var(--osu-pink);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .error-msg { 
+            color: #ff66aa; text-align: center; margin-top: 20px; display: none; 
+            background: rgba(255, 102, 170, 0.1); padding: 15px; border-radius: 8px;
+        }
+
+        /* --- Carrusel 3D Centrado --- */
+        .history-section {
+            width: 100%;
+            max-width: 1200px; /* Más ancho para permitir expansión lateral */
+            margin: 60px auto 80px auto;
+            perspective: 1200px;
+            overflow: visible; /* Permitir que las cartas laterales se vean aunque salgan un poco */
+            position: relative;
+            height: 220px; /* Altura fija para evitar saltos */
+        }
+
+        .history-title {
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .carousel-track {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center; /* Centrado inicial del contenedor */
+            align-items: center;
+            transform-style: preserve-3d;
+            cursor: grab;
+            will-change: transform;
+        }
+
+        .carousel-track:active {
+            cursor: grabbing;
+        }
+
+        .history-item {
+            position: absolute; /* Absoluto para control manual total de posición */
+            width: var(--card-width);
+            height: var(--card-height);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #444;
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.5s, filter 0.5s;
+            background: #000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            left: 50%; /* Punto de anclaje central */
+            margin-left: calc(var(--card-width) / -2); /* Centrar sobre el punto de anclaje */
+        }
+
+        .history-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .history-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .history-item.active {
+            border-color: var(--osu-pink);
+            box-shadow: 0 0 25px var(--osu-pink), inset 0 0 10px rgba(255, 102, 170, 0.5);
+            z-index: 100 !important;
+            filter: brightness(1.15);
+        }
+
+        .history-item::after {
+            content: attr(data-name);
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.9);
+            color: #fff;
+            font-size: 0.75rem;
+            text-align: center;
+            padding: 5px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            font-weight: bold;
+        }
+        
+        .history-item.active::after, .history-item:hover::after {
+            opacity: 1;
+        }
+
+        .drag-hint {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #555;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        /* Media Queries para móviles */
+        @media (max-width: 600px) {
+            :root {
+                --card-width: 80px;
+                --card-height: 80px;
+                --card-gap: 15px;
+            }
+            .history-section {
+                height: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><span class="highlight">osu! </span>Random Profile Finder</h1>
+    </header>
+
+    <div class="container">
+        <div id="loader" class="loader"></div>
+        <div id="error-msg" class="error-msg"></div>
+
+        <!-- Tarjeta Principal -->
+        <div id="profile-card" class="profile-card">
+            <div class="header-section">
+                <div class="avatar-container">
+                    <img id="user-avatar" src="" alt="Avatar">
+                </div>
+                <div class="user-info">
+                    <div class="username" id="user-name">Loading...</div>
+                    <div class="country" id="user-country">
+                        <span id="country-flag">🏳️</span> <span id="country-name">Unknown</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box"><div class="stat-label">Global Rank</div><div class="stat-value" id="stat-rank">#-</div></div>
+                <div class="stat-box"><div class="stat-label">Country Rank</div><div class="stat-value" id="stat-country-rank">#-</div></div>
+                <div class="stat-box"><div class="stat-label">PP</div><div class="stat-value" id="stat-pp">0</div></div>
+                <div class="stat-box"><div class="stat-label">Accuracy</div><div class="stat-value" id="stat-acc">0%</div></div>
+                <div class="stat-box"><div class="stat-label">Level</div><div class="stat-value" id="stat-level">0</div></div>
+                <div class="stat-box"><div class="stat-label">Plays</div><div class="stat-value" id="stat-plays">0</div></div>
+            </div>
+            
+            <div style="text-align: center; padding-bottom: 20px;">
+                <a id="profile-link" href="#" target="_blank" style="color: var(--osu-blue); text-decoration: none; font-weight: bold;">Ver perfil oficial &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="btn-fetch">Siguiente Aleatorio</button>
+        <p style="color: #666; font-size: 0.8rem; margin-top: 10px;">Presiona ESPACIO para buscar</p>
+    </div>
+
+    <!-- Sección de Historial (Carrusel 3D Centrado) -->
+    <div class="history-section">
+        <div class="history-title">Historial de Perfiles</div>
+        <div class="carousel-track" id="carousel-track">
+            <!-- Las tarjetas se generan aquí -->
+        </div>
+        <div class="drag-hint">Arrastra o usa las flechas del teclado</div>
+    </div>
+
+    <script>
+        const btnFetch = document.getElementById('btn-fetch');
+        const profileCard = document.getElementById('profile-card');
+        const loader = document.getElementById('loader');
+        const errorMsg = document.getElementById('error-msg');
+        const track = document.getElementById('carousel-track');
+        
+        // Elementos del DOM principal
+        const els = {
+            avatar: document.getElementById('user-avatar'),
+            name: document.getElementById('user-name'),
+            flag: document.getElementById('country-flag'),
+            country: document.getElementById('country-name'),
+            rank: document.getElementById('stat-rank'),
+            countryRank: document.getElementById('stat-country-rank'),
+            pp: document.getElementById('stat-pp'),
+            acc: document.getElementById('stat-acc'),
+            level: document.getElementById('stat-level'),
+            plays: document.getElementById('stat-plays'),
+            link: document.getElementById('profile-link')
+        };
+
+        let historyData = [];
+        let currentIndex = 0;
+        
+        // Configuración
+        const ROTATION_STEP = 12; // Grados de rotación por carta
+        const Z_STEP = -50; // Profundidad por carta (px)
+        
+        // Variables Drag
+        let isDragging = false;
+        let startDragX = 0;
+
+        async function fetchRandomUser() {
+            profileCard.style.display = 'none';
+            errorMsg.style.display = 'none';
+            loader.style.display = 'block';
+            btnFetch.disabled = true;
+            btnFetch.textContent = "Buscando...";
+
+            try {
+                const response = await fetch('/api/random-user');
+                if (!response.ok) throw new Error('Error de conexión');
+                const data = await response.json();
+                if (data.error || !data.id) throw new Error('Datos inválidos');
+
+                renderProfile(data);
+                addToHistory(data);
+
+                loader.style.display = 'none';
+                profileCard.style.display = 'block';
+                btnFetch.textContent = "Siguiente Aleatorio";
+            } catch (err) {
+                loader.style.display = 'none';
+                errorMsg.textContent = "Error: " + err.message;
+                errorMsg.style.display = 'block';
+                btnFetch.textContent = "Reintentar";
+            } finally {
+                btnFetch.disabled = false;
+            }
+        }
+
+        function renderProfile(data) {
+            els.avatar.src = `https://a.ppy.sh/${data.id}?${Date.now()}`;
+            els.name.textContent = data.username;
+            
+            let countryCode = '';
+            if (typeof data.country === 'string') countryCode = data.country;
+            else if (data.country && data.country.code) countryCode = data.country.code;
+            
+            els.country.textContent = countryCode || 'Unknown';
+            els.flag.textContent = getFlagEmoji(countryCode);
+
+            const stats = data.statistics || {};
+            els.rank.textContent = stats.global_rank > 0 ? '#' + stats.global_rank.toLocaleString() : '#-';
+            els.countryRank.textContent = stats.country_rank > 0 ? '#' + stats.country_rank.toLocaleString() : '#-';
+            els.pp.textContent = Math.round(stats.pp || 0).toLocaleString();
+            els.acc.textContent = (stats.hit_accuracy || 0).toFixed(2) + '%';
+            
+            const levelVal = typeof stats.level === 'object' ? stats.level.current : stats.level;
+            els.level.textContent = Math.round(levelVal || 0).toLocaleString();
+            els.plays.textContent = (stats.play_count || 0).toLocaleString();
+            
+            els.link.href = `https://osu.ppy.sh/users/${data.id}`;
+        }
+
+        function addToHistory(data) {
+            // Evitar duplicados inmediatos
+            if (historyData.length > 0 && historyData[historyData.length - 1].id === data.id) return;
+
+            historyData.push(data);
+            if (historyData.length > 40) {
+                historyData.shift();
+                if (track.firstChild) track.removeChild(track.firstChild);
+                if (currentIndex > 0) currentIndex--;
+            }
+
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.setAttribute('data-name', data.username);
+            item.innerHTML = `<img src="https://a.ppy.sh/${data.id}" alt="${data.username}">`;
+            
+            item.addEventListener('click', () => {
+                const index = historyData.findIndex(d => d.id === data.id);
+                if (index !== -1 && index !== currentIndex) {
+                    currentIndex = index;
+                    updateCarousel();
+                    renderProfile(data);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+
+            track.appendChild(item);
+            currentIndex = historyData.length - 1;
+            
+            // Forzar actualización inmediata para centrar la nueva carta
+            requestAnimationFrame(() => updateCarousel());
+        }
+
+        function updateCarousel() {
+            const items = Array.from(track.children);
+            const totalItems = items.length;
+            if (totalItems === 0) return;
+
+            // Obtener dimensiones reales actuales (responsive)
+            const cardWidth = items[0].offsetWidth;
+            const gap = 5; // Debe coincidir con CSS --card-gap
+
+            items.forEach((item, index) => {
+                const offset = index - currentIndex;
+                const absOffset = Math.abs(offset);
+
+                // 1. Posición X: Desplazamiento lateral desde el centro
+                const x = offset * (cardWidth + gap);
+
+                // 2. Rotación Y: Efecto abanico
+                // Limitamos la rotación máxima para que no se den la vuelta completamente
+                const rotation = offset * ROTATION_STEP;
+
+                // 3. Escala: El centro es 1, los lados más pequeños
+                const scale = Math.max(0.6, 1 - (absOffset * 0.1));
+
+                // 4. Opacidad: Desvanecer los lejanos
+                const opacity = Math.max(0.4, 1 - (absOffset * 0.15));
+
+                // 5. Z-Index: El centro arriba
+                const zIndex = 100 - absOffset;
+
+                // 6. Translate Z: Profundidad 3D
+                const z = -absOffset * Z_STEP;
+
+                // Aplicar transformación
+                // Nota: No usamos translateX en el padre, cada hijo se calcula relativo al centro (left: 50%)
+                item.style.transform = `translate3d(${x}px, 0, ${z}px) rotateY(${rotation}deg) scale(${scale})`;
+                item.style.zIndex = zIndex;
+                item.style.opacity = opacity;
+
+                if (index === currentIndex) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        // --- Manejo de Arrastre (Drag) ---
+
+        track.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startDragX = e.clientX;
+            track.style.cursor = 'grabbing';
+            track.style.transition = 'none'; // Quitar animación para respuesta instantánea
+        });
+
+        track.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            startDragX = e.touches[0].clientX;
+            track.style.transition = 'none';
+        });
+
+        const handleMove = (currentX) => {
+            if (!isDragging) return;
+            // Opcional: Efecto visual de arrastre en tiempo real
+            // Para simplificar y mantener el centrado perfecto, solo calculamos al soltar
+        };
+
+        track.addEventListener('mousemove', (e) => handleMove(e.clientX));
+        track.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientX));
+
+        const handleEnd = (endX) => {
+            if (!isDragging) return;
+            isDragging = false;
+            track.style.cursor = 'grab';
+            track.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+
+            const diff = endX - startDragX;
+            const threshold = 50; // Sensibilidad
+
+            if (diff < -threshold && currentIndex < historyData.length - 1) {
+                currentIndex++;
+            } else if (diff > threshold && currentIndex > 0) {
+                currentIndex--;
+            }
+            
+            updateCarousel();
+            
+            // Si cambió el índice, actualizar también la tarjeta principal
+            if (historyData[currentIndex]) {
+                // Pequeño delay para que se sienta el movimiento del carrusel primero
+                setTimeout(() => renderProfile(historyData[currentIndex]), 200);
+            }
+        };
+
+        track.addEventListener('mouseup', (e) => handleEnd(e.clientX));
+        track.addEventListener('touchend', (e) => handleEnd(e.changedTouches[0].clientX));
+
+        // Teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !btnFetch.disabled) {
+                e.preventDefault();
+                fetchRandomUser();
+            }
+            if (historyData.length === 0) return;
+
+            if (e.code === 'ArrowLeft') {
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    updateCarousel();
+                    renderProfile(historyData[currentIndex]);
+                }
+            }
+            if (e.code === 'ArrowRight') {
+                if (currentIndex < historyData.length - 1) {
+                    currentIndex++;
+                    updateCarousel();
+                    renderProfile(historyData[currentIndex]);
+                }
+            }
+        });
+
+        // Recalcular al cambiar tamaño de ventana
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(updateCarousel, 100);
+        });
+
+        function getFlagEmoji(countryCode) {
+            if (!countryCode) return '🏳️';
+            try {
+                const codePoints = countryCode.toUpperCase().split('').map(char => 127397 + char.charCodeAt());
+                return String.fromCodePoint(...codePoints);
+            } catch (e) { return '🏳️'; }
+        }
+
+        // Inicio
+        fetchRandomUser();
+    </script>
+</body>
+</html>
